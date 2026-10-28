@@ -1,0 +1,1042 @@
+{
+  "info": {
+    "_postman_id": "a823e59b-819a-4e2b-b67f-94d75d04c102",
+    "name": "Akatsuki's Draft Backend API",
+    "description": "Comprehensive Postman test collection for Akatsuki's Draft: AI-Enabled Content Sharing Platform (Nodevember 4.0). Tests authentication, role-based admin controls, post management, and Gemini AI workflows.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "userToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "secondUserToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "draftPostId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pendingPostId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "improvedPostId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. System Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Health reports healthy status and connected DB', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.eql(true);",
+              "    pm.expect(jsonData.data.status).to.eql('healthy');",
+              "    pm.expect(jsonData.data.database.connected).to.eql(true);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "1.1 Register New User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('Password is NOT returned', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.password).to.be.undefined;",
+                  "    pm.expect(jsonData.data.role).to.eql('user');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Test User\",\n  \"email\": \"postman.user@akatsuki.test\",\n  \"password\": \"P@ssword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "1.2 Register Duplicate Email (Expect 409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "pm.test('Error response has success=false', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.eql(false);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Duplicate User\",\n  \"email\": \"postman.user@akatsuki.test\",\n  \"password\": \"P@ssword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "1.3 Register Second User (for unauthorized tests)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 or 409', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Second Test User\",\n  \"email\": \"second.user@akatsuki.test\",\n  \"password\": \"SecondPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "1.4 Login with Invalid Password (Expect 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman.user@akatsuki.test\",\n  \"password\": \"WrongPassword!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "1.5 Login User 1 (Save userToken)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Returns JWT token', function () {",
+                  "    pm.expect(jsonData.data.token).to.be.a('string');",
+                  "    pm.collectionVariables.set('userToken', jsonData.data.token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman.user@akatsuki.test\",\n  \"password\": \"P@ssword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "1.6 Login User 2 (Save secondUserToken)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('secondUserToken', jsonData.data.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"second.user@akatsuki.test\",\n  \"password\": \"SecondPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "1.7 Login Admin (Save adminToken)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Admin token received', function () {",
+                  "    pm.expect(jsonData.data.token).to.be.a('string');",
+                  "    pm.expect(jsonData.data.user.role).to.eql('admin');",
+                  "    pm.collectionVariables.set('adminToken', jsonData.data.token);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@akatsuki.draft\",\n  \"password\": \"Admin@SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "1.8 GET /auth/me with Valid Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('User details returned correctly', function () {",
+                  "    pm.expect(jsonData.data.user.email).to.eql('postman.user@akatsuki.test');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "1.9 GET /auth/me with Missing Token (Expect 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Post Management",
+      "item": [
+        {
+          "name": "2.1 Create a Draft Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Draft post created with correct status', function () {",
+                  "    pm.expect(jsonData.data.status).to.eql('draft');",
+                  "    pm.collectionVariables.set('draftPostId', jsonData.data._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Test Draft Post\",\n  \"description\": \"Comprehensive draft exploring modern backend APIs.\",\n  \"content\": \"Node.js, Express, MongoDB Atlas, and JWT authentication form a robust foundation.\",\n  \"category\": \"Backend\",\n  \"status\": \"draft\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts"]
+            }
+          }
+        },
+        {
+          "name": "2.2 Submit Post for Review (Pending)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Post created with pending status', function () {",
+                  "    pm.expect(jsonData.data.status).to.eql('pending');",
+                  "    pm.collectionVariables.set('pendingPostId', jsonData.data._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Post Submitted for Approval\",\n  \"description\": \"Article submitted for editorial administrator review.\",\n  \"content\": \"Quality control and authorization pipelines ensure verified publication.\",\n  \"category\": \"Security\",\n  \"status\": \"pending\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts"]
+            }
+          }
+        },
+        {
+          "name": "2.3 Unauthorized Publication Attempt (Expect 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Malicious Direct Publish Attempt\",\n  \"description\": \"Attempting to bypass admin review.\",\n  \"content\": \"This request attempts to publish directly without approval.\",\n  \"category\": \"Security\",\n  \"status\": \"approved\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts"]
+            }
+          }
+        },
+        {
+          "name": "2.4 Fetch Public Approved Posts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Returns approved posts array', function () {",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts"]
+            }
+          }
+        },
+        {
+          "name": "2.5 Fetch Author's Own Draft by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Draft post details match', function () {",
+                  "    pm.expect(jsonData.data._id).to.eql(pm.collectionVariables.get('draftPostId'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/posts/{{draftPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts", "{{draftPostId}}"]
+            }
+          }
+        },
+        {
+          "name": "2.6 Fetch My Posts & Drafts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Contains user posts', function () {",
+                  "    pm.expect(jsonData.data.length).to.be.at.least(2);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/posts/my-posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts", "my-posts"]
+            }
+          }
+        },
+        {
+          "name": "2.7 Update Owned Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Title updated', function () {",
+                  "    pm.expect(jsonData.data.title).to.eql('Postman Test Draft Post (Revised)');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Test Draft Post (Revised)\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/posts/{{draftPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts", "{{draftPostId}}"]
+            }
+          }
+        },
+        {
+          "name": "2.8 Attempt to Update Another User's Post (Expect 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondUserToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Unauthorized Tampering Attempt\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/posts/{{draftPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts", "{{draftPostId}}"]
+            }
+          }
+        },
+        {
+          "name": "2.9 Invalid ObjectId Format (Expect 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/posts/not-a-valid-mongo-id",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts", "not-a-valid-mongo-id"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Admin Workflows",
+      "item": [
+        {
+          "name": "3.1 Non-Admin Pending Access Attempt (Expect 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/posts/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "posts", "pending"]
+            }
+          }
+        },
+        {
+          "name": "3.2 Retrieve Pending Posts as Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Returns pending posts list', function () {",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/posts/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "posts", "pending"]
+            }
+          }
+        },
+        {
+          "name": "3.3 Admin Approve Pending Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Post status transitioned to approved', function () {",
+                  "    pm.expect(jsonData.data.status).to.eql('approved');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/posts/approve/{{pendingPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "posts", "approve", "{{pendingPostId}}"]
+            }
+          }
+        },
+        {
+          "name": "3.4 Verify Approved Post Appears on Public Route",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test('Approved post is publicly visible', function () {",
+                  "    var found = jsonData.data.some(function(p) { return p._id === pm.collectionVariables.get('pendingPostId'); });",
+                  "    pm.expect(found).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts"]
+            }
+          }
+        },
+        {
+          "name": "3.5 Admin Reject a Post with Reason",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 400', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Does not meet publication guidelines.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/posts/reject/{{pendingPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "posts", "reject", "{{pendingPostId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. AI Content Improvement",
+      "item": [
+        {
+          "name": "4.1 Non-Owner AI Improve Attempt (Expect 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondUserToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/improve/{{draftPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai", "improve", "{{draftPostId}}"]
+            }
+          }
+        },
+        {
+          "name": "4.2 Owner AI Improve Draft Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Handled gracefully: 201 Created or 503 Service Unavailable if unconfigured key', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201, 503, 502]);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.test('New ID generated and saved as draft', function () {",
+                  "        pm.expect(jsonData.data.improvedPost._id).to.not.eql(pm.collectionVariables.get('draftPostId'));",
+                  "        pm.expect(jsonData.data.improvedPost.status).to.eql('draft');",
+                  "        pm.collectionVariables.set('improvedPostId', jsonData.data.improvedPost._id);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/improve/{{draftPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["ai", "improve", "{{draftPostId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Clean Up & Deletion",
+      "item": [
+        {
+          "name": "5.1 Non-Owner Delete Attempt (Expect 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{secondUserToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/posts/{{draftPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts", "{{draftPostId}}"]
+            }
+          }
+        },
+        {
+          "name": "5.2 Owner Delete Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/posts/{{draftPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["posts", "{{draftPostId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

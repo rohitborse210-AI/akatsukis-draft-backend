@@ -1,0 +1,46 @@
+{
+  "name": "akatsukis-draft-backend",
+  "version": "1.0.0",
+  "description": "Akatsuki's Draft: AI-Enabled Content Sharing Platform (Backend) for Nodevember 4.0",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test tests/api.test.js",
+    "test:newman": "node scripts/runNewman.js",
+    "verify:db": "node scripts/verifyDatabase.js",
+    "bootstrap:admin": "node scripts/bootstrapAdmin.js"
+  },
+  "keywords": [
+    "express",
+    "mongodb",
+    "mongoose",
+    "jwt",
+    "gemini-ai",
+    "content-sharing",
+    "akatsuki",
+    "nodevember"
+  ],
+  "author": "Rohit Vinod Borse",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^2.3.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5"
+  },
+  "devDependencies": {
+    "newman": "^6.2.1",
+    "supertest": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
