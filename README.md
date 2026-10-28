@@ -25,8 +25,6 @@
 12. [MongoDB Data Verification](#mongodb-data-verification)
 13. [Vercel Deployment Guide](#vercel-deployment-guide)
 14. [GitHub Publication Guide](#github-publication-guide)
-15. [FreeCodeCamp Certification Guide](#freecodecamp-certification-guide)
-16. [Security Highlights](#security-highlights)
 
 ---
 
@@ -37,11 +35,8 @@
 | **Author** | Rohit Vinod Borse |
 | **GitHub Repository** | `https://github.com/rohitborse210-AI/akatsukis-draft-backend` *(configured & ready)* |
 | **Deployed Production URL (Vercel)** | `https://akatsukis-draft-backend.vercel.app` *(configured & ready for Vercel import)* |
-| **FreeCodeCamp Certificate URL** | `https://www.freecodecamp.org/certification/rohitborse210/back-end-development-and-apis-v9` *(workflow documented below)* |
 
----
-
-## Key Features
+---# Key Features
 
 - **Strict Role-Based Access Control (RBAC)**: Distinct permissions for `user` and `admin` roles. Public registration is locked to ordinary `user` accounts. Initial admin creation is performed via secure bootstrap scripts or environment control.
 - **Editorial Publishing Lifecycle**: Posts transition through explicit lifecycle states:
@@ -566,39 +561,4 @@ To publish this project to GitHub:
    git push -u origin main
    ```
 
----
 
-## FreeCodeCamp Certification Guide
-
-Official Course Link:
-👉 [https://www.freecodecamp.org/learn/back-end-development-and-apis-v9/](https://www.freecodecamp.org/learn/back-end-development-and-apis-v9/)
-
-To claim the **Back End Development and APIs Certification** honestly:
-
-### Step 1: Complete Curriculum Modules
-1. **Managing Packages with npm**: Understanding `package.json`, semantic versioning, and dependencies.
-2. **Basic Node and Express**: Express routing, middleware, serve static files, request queries, body parsing.
-3. **MongoDB and Mongoose**: Schema creation, CRUD operations with Mongoose, validation.
-
-### Step 2: Complete the 5 Required Certification Projects
-Submit live URLs and source repositories for each of the five required projects:
-1. **Timestamp Microservice**: Handle valid dates and Unix timestamps (`GET /api/:date?`).
-2. **Request Header Parser Microservice**: Return IP address, preferred language, and software (`GET /api/whoami`).
-3. **URL Shortener Microservice**: Validate URLs with `dns.lookup`, generate short URLs, and redirect (`POST /api/shorturl`, `GET /api/shorturl/:short_url`).
-4. **Exercise Tracker**: Manage users, add exercises, and retrieve logs with date/limit filters (`POST /api/users`, `POST /api/users/:_id/exercises`, `GET /api/users/:_id/logs`).
-5. **File Metadata Microservice**: Handle multipart file uploads using `multer` and return file size, name, and type (`POST /api/fileanalyse`).
-
-### Step 3: Claim Certificate
-1. Pass all automated tests on FreeCodeCamp for the 5 projects.
-2. Agree to the Academic Honesty Pledge.
-3. Claim your certificate and add your public URL to your submission.
-
----
-
-## Security Highlights
-
-- **No Public Admin Registration**: Admin role can never be set during standard registration.
-- **Secret Hygiene**: Zero hardcoded credentials or API tokens in code or Git commits.
-- **Input Sanitization**: Email normalization and regex validation; MongoDB ObjectId format checks.
-- **Prompt Injection Defense**: Author post contents are treated strictly as untrusted text within isolated prompt blocks.
-- **Helmet & Rate Limiting**: Secure HTTP response headers and endpoint-level request limits.
